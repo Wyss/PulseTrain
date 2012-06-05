@@ -60,6 +60,9 @@
 // Macros
 /////////
 #define ARE_STRINGS_EQ(s1, s2) (strncmp(s1, s2, sizeof(s2)) == 0)
+#define GET_INIT    0
+#define GET_ACCEPT  1
+#define GET_FAIL    2
 
 #include "SPI.h"
 #include "avr/pgmspace.h" // new include
@@ -98,15 +101,23 @@ void returnState(WebServer &server, WebServer::ConnectionType type)
     server << " }";
 }
 
+void returnFailState(WebServer &server, WebServer::ConnectionType type, uint8_t fail) 
+{
+    server << "{ \"FAIL\": " << fail << " }";
+}
+
 // Takes a function pointer to a processor
 void getCmd(WebServer &server, WebServer::ConnectionType type, 
-        char *url_tail, bool tail_complete, void (*myCmd)(char*, char*))
+        char *url_tail, bool tail_complete, void (*myCmd)(char*, char*, uint8_t*, uint8_t*))
 {
     URLPARAM_RESULT rc;
     char name[NAMELEN];
     int  name_len;
     char value[VALUELEN];
     int value_len;
+    uint8_t arg = 0;
+    uint8_t ret_value = GET_INIT;
+    
     /* this line sends the standard "we're all OK" headers back to the
        browser */
     server.httpSuccess("application/json");
@@ -121,34 +132,56 @@ void getCmd(WebServer &server, WebServer::ConnectionType type,
         while (strlen(url_tail)) {
             rc = server.nextURLparam(&url_tail, name, NAMELEN, value, VALUELEN);
             if (rc != URLPARAM_EOS) {
-                (*myCmd)(name, value); // execute the function ptr
+                (*myCmd)(name, value, &arg, &ret_value); // execute the function ptr
             } // end if
         } // end while
     } // end if
-    returnState(server,type);
+    switch (ret_value) {
+        case GET_INIT:
+        case GET_ACCEPT:
+            returnState(server,type);
+            break;
+        case GET_FAIL:
+            returnFailState(server,type, arg);
+    } 
 }
 
-void pTrainParse(char * name, char* value)
+void pTrainParse(char* name, char* value, uint8_t* pt, uint8_t* ret_value)
 {
     int value_copy;
-    if (ARE_STRINGS_EQ(name, "PULSE")) {
-        value_copy =  atoi(value);
-        pSetPulseOnlyUS(waterp, (uint16_t) value_copy);
-        pReloadToTimer(waterp); 
-    } // end 
-    else if (ARE_STRINGS_EQ(name, "PERIOD")) {
-        value_copy =  atoi(value);
-        pSetPeriodOnlyUS(waterp, (uint16_t) value_copy);
-        pReloadToTimer(waterp); 
-    } // end if
-    else if (ARE_STRINGS_EQ(name, "COUNT")) {
-        value_copy =  atoi(value);
-        pSetPeriodNumberOnly(waterp, (uint16_t) value_copy);
-        pReloadToTimer(waterp); 
-    } // end if
-    else if (ARE_STRINGS_EQ(name, "START")) {
-        pStartTimer(PTIMER1);
-    } // end if
+    switch (*ret_value) {
+        case GET_INIT:
+            if (ARE_STRINGS_EQ(name, "VALVE")) {
+                value_copy =  atoi(value);
+                if (pIsValidPTrain(value_copy)){
+                    *pt = value_copy;
+                    *ret_value =  GET_ACCEPT;
+                    break;
+                } // end if
+            } // end if
+            *pt = 7;
+            *ret_value =  GET_FAIL;
+            break;
+        case GET_ACCEPT:
+            if (ARE_STRINGS_EQ(name, "PULSE")) {
+                value_copy =  atoi(value);
+                pSetPulseOnlyUS(*pt, (uint16_t) value_copy);
+                pReloadToTimer(waterp); 
+            } // end 
+            else if (ARE_STRINGS_EQ(name, "PERIOD")) {
+                value_copy =  atoi(value);
+                pSetPeriodOnlyUS(*pt, (uint16_t) value_copy);
+                pReloadToTimer(*pt); 
+            } // end if
+            else if (ARE_STRINGS_EQ(name, "COUNT")) {
+                value_copy =  atoi(value);
+                pSetPeriodNumberOnly(*pt, (uint16_t) value_copy);
+                pReloadToTimer(*pt); 
+            } // end if
+            else if (ARE_STRINGS_EQ(name, "START")) {
+                pStartTimer(PTIMER1);
+            } // end if
+    }
 }
 
 void pulseTrainCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail, bool tail_complete)

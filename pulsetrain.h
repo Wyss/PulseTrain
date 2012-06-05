@@ -306,6 +306,9 @@ uint8_t pNewPTrain(void) {
     }
 }
 
+boolean pIsValidPTrain(uint8_t test) {
+    return (test < ptrain_count ) ? true: false;
+}
 
 uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer) {
     if(ptrain_index < NUMBER_OF_PTRAINS ) {
