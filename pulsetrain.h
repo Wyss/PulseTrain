@@ -469,6 +469,23 @@ uint8_t pRemoveFromTimer(timers16bit_t timer, uint8_t ptrain_idx) {
     }
 }
 
+uint8_t pClearTimerOfPTrains(timers16bit_t timer) {
+    volatile timer16control_t *timer_control = &timer_array[timer];
+    timer_control->number_of_ptrains = 0;
+}
+
+bool pIsPTrainActive(uint8_t ptrain_idx) {
+    ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+    volatile timer16control_t *timer_control = &timer_array[ptrain_control->timer_number];
+    if ((ptrain_idx == timer_control->ptrain_idxs[ptrain_control->timer_index]) && 
+        (pIsTimerActive(ptrain_control->timer_number)) ) {
+            return true;
+        }
+    else {
+        return false;
+    }
+}
+
 uint8_t pStartTimer(timers16bit_t timer) {
     // Start a Timer and reset its count
     volatile timer16control_t *timer_control = &timer_array[timer];
