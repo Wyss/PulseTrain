@@ -308,6 +308,11 @@ uint8_t pNewPTrain(void) {
     }
 }
 
+uint8_t pStartPTrain(uint8_t ptrain_idx) {
+        ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+        pStartTimer(ptrain_control->timer_number);
+}
+
 boolean pIsValidPTrain(uint8_t test) {
     return (test < ptrain_count ) ? true: false;
 }
