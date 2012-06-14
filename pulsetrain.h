@@ -297,9 +297,11 @@ static boolean pIsTimerActive(timers16bit_t timer)
 
 uint8_t pNewPTrain(void) {
     // returns the ptrain_index
+    uint8_t temp = ptrain_count;
     if( ptrain_count < NUMBER_OF_PTRAINS) {
         ptrains[ptrain_count].prescale = DEFAULT_PTRAIN_PRESCALE;
-        return ptrain_count++;
+        ptrain_count++;
+        return temp;
     }
     else {
         return ERROR_PTRAIN_IDX ;  // too many PTRAINS 
