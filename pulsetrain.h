@@ -308,9 +308,9 @@ uint8_t pNewPTrain(void) {
     }
 }
 
-uint8_t pStartPTrain(uint8_t ptrain_idx) {
+void pStartPTrain(uint8_t ptrain_idx) {
         ptrain_t *ptrain_control = &ptrains[ptrain_idx];
-        pStartTimer(ptrain_control->timer_number);
+        pStartTimer(ptrain_control->timer_number);    
 }
 
 boolean pIsValidPTrain(uint8_t test) {
@@ -476,7 +476,7 @@ uint8_t pRemoveFromTimer(timers16bit_t timer, uint8_t ptrain_idx) {
     }
 }
 
-uint8_t pClearTimerOfPTrains(timers16bit_t timer) {
+void pClearTimerOfPTrains(timers16bit_t timer) {
     volatile timer16control_t *timer_control = &timer_array[timer];
     timer_control->number_of_ptrains = 0;
 }
