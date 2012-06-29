@@ -332,8 +332,8 @@ uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer) {
     }
 }
 
-uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint16_t period, 
-                        uint16_t pulse_width, uint16_t period_num_limit, 
+uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint32_t period, 
+                        uint32_t pulse_width, uint16_t period_num_limit, 
                         uint16_t prescale) {
     // set period and pulsewidth in microseconds
     if(ptrain_index < NUMBER_OF_PTRAINS ) {
@@ -365,19 +365,19 @@ uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint16_t period,
     }
 }       
 
-uint8_t pSetPulseUS(uint8_t ptrain_index, uint16_t period, 
-                    uint16_t pulse_width, uint16_t period_num_limit) {
+uint8_t pSetPulseUS(uint8_t ptrain_index, uint32_t period, 
+                    uint32_t pulse_width, uint16_t period_num_limit) {
     // for use when you don't want to set the prescaler or it's already set
     return _pSetPulseUS(ptrain_index, period, pulse_width, 
                                 period_num_limit, ptrains[ptrain_index].prescale); 
 }
 
-uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint16_t pulse_width) {
+uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint32_t pulse_width) {
     ptrain_t *ptrain = &ptrains[ptrain_index];
     ptrain->pulse_counts = US_TO_COUNTS(pulse_width,ptrain->prescale);
     return 0;
 }
-uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint16_t period) {
+uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint32_t period) {
     ptrain_t *ptrain = &ptrains[ptrain_index];
     ptrain->period_counts = US_TO_COUNTS(period,ptrain->prescale);
     return 0;
