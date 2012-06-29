@@ -119,7 +119,7 @@ uint8_t _pSetPulseUS(uint8_t ptrain_index, uint32_t period,
                         uint32_t pulse_width,  uint16_t period_num_limit, 
                         uint16_t prescale);
 uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint32_t pulse_width);
-uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint32_t period);
+uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index_t period);
 uint8_t pSetPeriodNumberOnly(uint8_t ptrain_index, uint16_t period_num_limit);
 uint16_t pGetPulseCounts(uint8_t ptrain_index);
 uint16_t pGetPeriodCounts(uint8_t ptrain_index);
