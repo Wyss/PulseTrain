@@ -51,6 +51,7 @@
 #define NAMELEN 32
 #define VALUELEN 32
 
+#define P_USE_TIMER1
 
 // Analog Pins
  
