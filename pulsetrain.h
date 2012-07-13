@@ -488,6 +488,11 @@ void pClearTimerOfPTrains(timers16bit_t timer) {
     timer_control->number_of_ptrains = 0;
 }
 
+void pClearPTrainsTimer(uint8_t ptrain_idx) {
+    ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+    pClearTimerOfPTrains(ptrain_control->timer_number);
+}
+
 bool pIsPTrainActive(uint8_t ptrain_idx) {
     ptrain_t *ptrain_control = &ptrains[ptrain_idx];
     volatile timer16control_t *timer_control = &timer_array[ptrain_control->timer_number];
@@ -552,10 +557,22 @@ uint8_t pStopTimer(timers16bit_t timer) {
 
 uint8_t pSetupTimers() {
     // ensure timer state is where we want it
-    for (uint8_t i = 0; i < NUMBER_OF_16BIT_TIMERS; i++) {
-        pStopTimer((timers16bit_t) i);
-        timer_array[i].pulsed_state = POFF;
-    }
+    #ifdef P_USE_TIMER1
+        pStopTimer(PTIMER1);
+        timer_array[0].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER3
+        pStopTimer(PTIMER3);
+        timer_array[1].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER4
+        pStopTimer(PTIMER4);
+        timer_array[2].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER5
+        pStopTimer(PTIMER5);
+        timer_array[3].pulsed_state = POFF;
+    #endif
     return 0;
 }
 
