@@ -113,13 +113,13 @@ uint8_t pSetupTimers();
 uint8_t pNewPTrain();
 uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer);
 
-uint8_t pSetPulseUS(uint8_t ptrain_index, uint16_t period, 
-                        uint16_t pulse_width, uint16_t period_num_limit);
-uint8_t _pSetPulseUS(uint8_t ptrain_index, uint16_t period, 
-                        uint16_t pulse_width,  uint16_t period_num_limit, 
+uint8_t pSetPulseUS(uint8_t ptrain_index, uint32_t period, 
+                        uint32_t pulse_width, uint16_t period_num_limit);
+uint8_t _pSetPulseUS(uint8_t ptrain_index, uint32_t period, 
+                        uint32_t pulse_width,  uint16_t period_num_limit, 
                         uint16_t prescale);
-uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint16_t pulse_width);
-uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint16_t period);
+uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint32_t pulse_width);
+uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint32_t period);
 uint8_t pSetPeriodNumberOnly(uint8_t ptrain_index, uint16_t period_num_limit);
 uint16_t pGetPulseCounts(uint8_t ptrain_index);
 uint16_t pGetPeriodCounts(uint8_t ptrain_index);
@@ -252,26 +252,33 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
 
 // Interrupt handlers for Arduino
 /////////////////////////////////
+#ifdef P_USE_TIMER1
 SIGNAL (TIMER1_COMPA_vect) 
 { 
-  pHandleInterrupts(PTIMER1, &TCNT1, &OCR1A); 
+    pHandleInterrupts(PTIMER1, &TCNT1, &OCR1A); 
 }
+#endif
 
+#ifdef P_USE_TIMER3
 SIGNAL (TIMER3_COMPA_vect) 
 { 
-  pHandleInterrupts(PTIMER3, &TCNT3, &OCR3A); 
+    pHandleInterrupts(PTIMER3, &TCNT3, &OCR3A); 
 }
+#endif
 
+#ifdef P_USE_TIMER4
 SIGNAL (TIMER4_COMPA_vect) 
 {
-  pHandleInterrupts(PTIMER4, &TCNT4, &OCR4A); 
+    pHandleInterrupts(PTIMER4, &TCNT4, &OCR4A); 
 }
+#endif
 
+#ifdef P_USE_TIMER5
 SIGNAL (TIMER5_COMPA_vect) 
 {
-  pHandleInterrupts(PTIMER5, &TCNT5, &OCR5A); 
+    pHandleInterrupts(PTIMER5, &TCNT5, &OCR5A); 
 }
-
+#endif
 
 static boolean pIsTimerActive(timers16bit_t timer)
 {
@@ -332,8 +339,8 @@ uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer) {
     }
 }
 
-uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint16_t period, 
-                        uint16_t pulse_width, uint16_t period_num_limit, 
+uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint32_t period, 
+                        uint32_t pulse_width, uint16_t period_num_limit, 
                         uint16_t prescale) {
     // set period and pulsewidth in microseconds
     if(ptrain_index < NUMBER_OF_PTRAINS ) {
@@ -365,19 +372,19 @@ uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint16_t period,
     }
 }       
 
-uint8_t pSetPulseUS(uint8_t ptrain_index, uint16_t period, 
-                    uint16_t pulse_width, uint16_t period_num_limit) {
+uint8_t pSetPulseUS(uint8_t ptrain_index, uint32_t period, 
+                    uint32_t pulse_width, uint16_t period_num_limit) {
     // for use when you don't want to set the prescaler or it's already set
     return _pSetPulseUS(ptrain_index, period, pulse_width, 
                                 period_num_limit, ptrains[ptrain_index].prescale); 
 }
 
-uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint16_t pulse_width) {
+uint8_t pSetPulseOnlyUS(uint8_t ptrain_index, uint32_t pulse_width) {
     ptrain_t *ptrain = &ptrains[ptrain_index];
     ptrain->pulse_counts = US_TO_COUNTS(pulse_width,ptrain->prescale);
     return 0;
 }
-uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint16_t period) {
+uint8_t pSetPeriodOnlyUS(uint8_t ptrain_index, uint32_t period) {
     ptrain_t *ptrain = &ptrains[ptrain_index];
     ptrain->period_counts = US_TO_COUNTS(period,ptrain->prescale);
     return 0;
@@ -482,6 +489,11 @@ void pClearTimerOfPTrains(timers16bit_t timer) {
     timer_control->number_of_ptrains = 0;
 }
 
+void pClearPTrainsTimer(uint8_t ptrain_idx) {
+    ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+    pClearTimerOfPTrains(ptrain_control->timer_number);
+}
+
 bool pIsPTrainActive(uint8_t ptrain_idx) {
     ptrain_t *ptrain_control = &ptrains[ptrain_idx];
     volatile timer16control_t *timer_control = &timer_array[ptrain_control->timer_number];
@@ -546,10 +558,22 @@ uint8_t pStopTimer(timers16bit_t timer) {
 
 uint8_t pSetupTimers() {
     // ensure timer state is where we want it
-    for (uint8_t i = 0; i < NUMBER_OF_16BIT_TIMERS; i++) {
-        pStopTimer((timers16bit_t) i);
-        timer_array[i].pulsed_state = POFF;
-    }
+    #ifdef P_USE_TIMER1
+        pStopTimer(PTIMER1);
+        timer_array[0].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER3
+        pStopTimer(PTIMER3);
+        timer_array[1].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER4
+        pStopTimer(PTIMER4);
+        timer_array[2].pulsed_state = POFF;
+    #endif
+    #ifdef P_USE_TIMER5
+        pStopTimer(PTIMER5);
+        timer_array[3].pulsed_state = POFF;
+    #endif
     return 0;
 }
 
