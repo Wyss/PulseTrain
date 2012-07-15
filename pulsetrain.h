@@ -35,8 +35,8 @@
 // to run stepper motors effectively as they have in excess of 2000 steps/rev
 // often when microstepping
 
-#ifndef PulseTrain_h
-#define PulseTrain_h
+#ifndef PULSETRAIN_H
+#define PULSETRAIN_H
 
 #include <inttypes.h>
 
