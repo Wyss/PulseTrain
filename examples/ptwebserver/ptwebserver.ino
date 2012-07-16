@@ -60,7 +60,7 @@
 
 // Macros
 /////////
-#define ARE_STRINGS_EQ(s1, s2) (strncmp(s1, s2, sizeof(s2)) == 0)
+#define ARE_STRINGS_EQ(s1, s2) (strncmp(s1, s2, sizeof(s2)-1) == 0)
 #define GET_INIT    0
 #define GET_ACCEPT  1
 #define GET_FAIL    2
