@@ -77,10 +77,12 @@ enum pulse_states { PPULSE_LO, PPULSE_HI, PDC_INIT, PDC_RUNNING, POFF};
 #define CLOCKCYCLESPERMICROSECOND ( F_CPU / 1000000L ) 
 #endif
 
+#ifndef US_TO_COUNTS
 // converts microseconds to tick (assumes prescale of 8) 
 #define US_TO_COUNTS(_us,_scale)        (( CLOCKCYCLESPERMICROSECOND* _us) / _scale)
 // converts from counts back to microseconds
 #define COUNTS_TO_US(_counts,_scale)    (( (unsigned)_counts * _scale)/ CLOCKCYCLESPERMICROSECOND )
+#endif
 
 // Custom Structs
 /////////////////
