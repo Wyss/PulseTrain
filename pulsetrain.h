@@ -70,6 +70,7 @@ enum pulse_states { PPULSE_LO, PPULSE_HI, PDC_INIT, PDC_RUNNING, POFF};
 #define ERROR_TIMER_RUNNING     253
 #define ERROR_TIMER_COUNT       254
 #define ERROR_PTRAIN_IDX        255
+#define P_LIMIT_HIT             255
 
 // MACROS
 ////////////////
@@ -100,6 +101,9 @@ typedef struct {
 
 typedef struct {
     uint8_t     ptrain_idxs[PTRAINS_PER_TIMER];   // a ptrain index from 0 to NUMBER_OF_PTRAINS - 1
+    uint8_t     limit_pin;
+    bool        use_limit;
+    uint8_t     limit_state;
     uint8_t     number_of_ptrains;               // number of ptrains attached in use
     uint16_t    number_of_periods;              // number of periods output currently
     uint16_t    period_num_limit;               // number of periods allowed
@@ -192,6 +196,11 @@ static void pEnableISR(timers16bit_t timer)
     }
 }
 
+bool pIsAtLimit(timers16bit_t timer) {
+    volatile timer16control_t *timer_control = &timer_array[timer];
+    return (digitalRead(timer_control->limit_pin) == timer_control->limit_state);
+}
+
 static inline void pHandleInterrupts(   timers16bit_t timer, 
                                         volatile uint16_t *TCNTn, 
                                         volatile uint16_t* OCRnA)
@@ -214,6 +223,13 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             *OCRnA = timer_control->pulse_counts;
             break;
         case PPULSE_HI:
+            if (timer_control->use_limit) {
+                if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
+                    timer_control->limit_state = P_LIMIT_HIT; // limit hit
+                    pStopTimer(timer);
+                    break;
+                }
+            }
             for (int i = 0; i < num_ptrains; i++)
             {
                 out_ptrain = &ptrains[ptrain_idxs[i]];
@@ -414,7 +430,7 @@ uint8_t pStop(uint8_t ptrain_index) {
     // 1. remove ptrain from it's timer16control
     ptrain_t *ptrain = &ptrains[ptrain_index];
     pStopTimer(ptrain->timer_number);
-    ptrain->timer_index = pRemoveFromTimer(ptrain->timer_number, ptrain_index);
+    // ptrain->timer_index = pRemoveFromTimer(ptrain->timer_number, ptrain_index);
     return ptrain->timer_index;
 }
 
@@ -508,6 +524,34 @@ bool pIsPTrainActive(uint8_t ptrain_idx) {
     }
 }
 
+timers16bit_t pGetTimer(uint8_t ptrain_idx) {
+    return ptrains[ptrain_idx].timer_number; 
+}
+
+bool pWasTimerLimitHit(timers16bit_t timer) {
+    return (timer_array[timer].limit_state == P_LIMIT_HIT); 
+}
+
+
+bool pIsPTrainTimerActive(uint8_t ptrain_idx) {
+    ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+    volatile timer16control_t *timer_control = &timer_array[ptrain_control->timer_number];
+    return pIsTimerActive(ptrain_control->timer_number);
+}
+
+uint8_t pAttachLimitTimer(timers16bit_t timer, uint8_t limit_pin, uint8_t limit_state) {
+    volatile timer16control_t *timer_control = &timer_array[timer];
+    timer_control->limit_pin = limit_pin;
+    timer_control->limit_pin = limit_state;
+    timer_control->use_limit = true;
+    return 0;
+}
+
+uint8_t pAttachLimit(uint8_t ptrain_idx, uint8_t limit_pin, uint8_t limit_state) {
+    ptrain_t *ptrain_control = &ptrains[ptrain_idx];
+    return pAttachLimitTimer(ptrain_control->timer_number, limit_pin, limit_state);
+}
+
 uint8_t pStartTimer(timers16bit_t timer) {
     // Start a Timer and reset its count
     volatile timer16control_t *timer_control = &timer_array[timer];
@@ -563,18 +607,22 @@ uint8_t pSetupTimers() {
     #ifdef P_USE_TIMER1
         pStopTimer(PTIMER1);
         timer_array[0].pulsed_state = POFF;
+        timer_array[0].use_limit = false;
     #endif
     #ifdef P_USE_TIMER3
         pStopTimer(PTIMER3);
         timer_array[1].pulsed_state = POFF;
+        timer_array[1].use_limit = false;
     #endif
     #ifdef P_USE_TIMER4
         pStopTimer(PTIMER4);
         timer_array[2].pulsed_state = POFF;
+        timer_array[2].use_limit = false;
     #endif
     #ifdef P_USE_TIMER5
         pStopTimer(PTIMER5);
         timer_array[3].pulsed_state = POFF;
+        timer_array[3].use_limit = false;
     #endif
     return 0;
 }
