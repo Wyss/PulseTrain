@@ -542,7 +542,7 @@ bool pIsPTrainTimerActive(uint8_t ptrain_idx) {
 uint8_t pAttachLimitTimer(timers16bit_t timer, uint8_t limit_pin, uint8_t limit_state) {
     volatile timer16control_t *timer_control = &timer_array[timer];
     timer_control->limit_pin = limit_pin;
-    timer_control->limit_pin = limit_state;
+    timer_control->limit_state = limit_state;
     timer_control->use_limit = true;
     return 0;
 }
