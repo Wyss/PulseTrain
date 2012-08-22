@@ -201,6 +201,10 @@ bool pIsAtLimit(timers16bit_t timer) {
     return (digitalRead(timer_control->limit_pin) == timer_control->limit_state);
 }
 
+bool pIsLimitUsed(timers16bit_t timer) {
+    return timer_array[timer].use_limit;
+}
+
 static inline void pHandleInterrupts(   timers16bit_t timer, 
                                         volatile uint16_t *TCNTn, 
                                         volatile uint16_t* OCRnA)
@@ -226,6 +230,7 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             if (timer_control->use_limit) {
                 if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
                     timer_control->limit_state = P_LIMIT_HIT; // limit hit
+                    timer_control->use_limit = false;  // must explicity attach the limit each time 
                     pStopTimer(timer);
                     break;
                 }
