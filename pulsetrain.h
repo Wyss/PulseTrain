@@ -362,6 +362,18 @@ uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer) {
     }
 }
 
+uint8_t pReAttach(uint8_t ptrain_index) {
+    if(ptrain_index < NUMBER_OF_PTRAINS ) {
+        ptrain_t *ptrain = &ptrains[ptrain_index];
+        // initialize the timer if it has not already been initialized 
+        ptrain->timer_index = pAddToTimer(ptrain->timer_number, ptrain_index);
+        return ptrain_index;
+    }
+    else {
+        return ERROR_PTRAIN_IDX ;  // too many PTRAINS 
+    }
+}
+
 uint8_t _pSetPulseUS(   uint8_t ptrain_index, uint32_t period, 
                         uint32_t pulse_width, uint16_t period_num_limit, 
                         uint16_t prescale) {
