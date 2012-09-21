@@ -227,14 +227,6 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             *OCRnA = timer_control->pulse_counts;
             break;
         case PPULSE_HI:
-            if (timer_control->use_limit) {
-                if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
-                    timer_control->limit_state = P_LIMIT_HIT; // limit hit
-                    timer_control->use_limit = false;  // must explicity attach the limit each time 
-                    pStopTimer(timer);
-                    break;
-                }
-            }
             for (int i = 0; i < num_ptrains; i++)
             {
                 out_ptrain = &ptrains[ptrain_idxs[i]];
@@ -246,6 +238,14 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
                 pStopTimer(timer);
             }
             *OCRnA = timer_control->period_counts;
+            if (timer_control->use_limit) {
+                if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
+                    timer_control->limit_state = P_LIMIT_HIT; // limit hit
+                    timer_control->use_limit = false;  // must explicity attach the limit each time
+                    pStopTimer(timer);
+                    //break;
+                }
+            }
             break;
         default:
         case PDC_INIT:
