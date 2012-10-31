@@ -276,28 +276,28 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
 // Interrupt handlers for Arduino
 /////////////////////////////////
 #ifdef P_USE_TIMER1
-ISR (TIMER1_COMPA_vect) 
+SIGNAL (TIMER1_COMPA_vect) 
 { 
     pHandleInterrupts(PTIMER1, &TCNT1, &OCR1A); 
 }
 #endif
 
 #ifdef P_USE_TIMER3
-ISR (TIMER3_COMPA_vect) 
+SIGNAL (TIMER3_COMPA_vect) 
 { 
     pHandleInterrupts(PTIMER3, &TCNT3, &OCR3A); 
 }
 #endif
 
 #ifdef P_USE_TIMER4
-ISR (TIMER4_COMPA_vect) 
+SIGNAL (TIMER4_COMPA_vect) 
 {
     pHandleInterrupts(PTIMER4, &TCNT4, &OCR4A); 
 }
 #endif
 
 #ifdef P_USE_TIMER5
-ISR (TIMER5_COMPA_vect) 
+SIGNAL (TIMER5_COMPA_vect) 
 {
     pHandleInterrupts(PTIMER5, &TCNT5, &OCR5A); 
 }
