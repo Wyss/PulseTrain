@@ -170,15 +170,15 @@ static void pEnableISR(timers16bit_t timer)
         case PTIMER3:
             TCCR3A = 0x00;          // normal counting mode 
             OCR3A = SMALL_COUNT;    // set the output compare to some token count
-            TIFR3 = _BV(OCF3A);     // clear any pending interrupts;
-            TCCR3B &= timer_control->bit_prescale;
+            TIFR3 |= _BV(OCF3A);     // clear any pending interrupts;
+            TCCR3B |= timer_control->bit_prescale;
             TCNT3 = 0x0000;         // clear the timer count
             TIMSK3 =  _BV(OCIE3A);  // enable the output compare interrupt
             break;
         case PTIMER4:
             TCCR4A = 0x00;          // normal counting mode
             OCR4A = SMALL_COUNT;    // set the output compare to some token count
-            TIFR4 = _BV(OCF4A);     // clear any pending interrupts;
+            TIFR4 |= _BV(OCF4A);     // clear any pending interrupts;
             TCCR4B |= timer_control->bit_prescale;
             TCNT4 = 0x0000;         // clear the timer count
             TIMSK4 =  _BV(OCIE4A);  // enable the output compare interrupt
@@ -186,7 +186,7 @@ static void pEnableISR(timers16bit_t timer)
         case PTIMER5:
             TCCR5A = 0x00;          // normal counting mode
             OCR5A = SMALL_COUNT;    // set the output compare to some token count
-            TIFR5 = _BV(OCF5A);     // clear any pending interrupts; 
+            TIFR5 |= _BV(OCF5A);     // clear any pending interrupts; 
             TCCR5B |= timer_control->bit_prescale;
             TCNT5 = 0x0000;         // clear the timer count
             TIMSK5 =  _BV(OCIE5A);  // enable the output compare interrupt 
@@ -199,6 +199,10 @@ static void pEnableISR(timers16bit_t timer)
 bool pIsAtLimit(timers16bit_t timer) {
     volatile timer16control_t *timer_control = &timer_array[timer];
     return (digitalRead(timer_control->limit_pin) == timer_control->limit_state);
+}
+
+bool pIsLimitUsed(timers16bit_t timer) {
+    return timer_array[timer].use_limit;
 }
 
 static inline void pHandleInterrupts(   timers16bit_t timer, 
@@ -223,13 +227,6 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             *OCRnA = timer_control->pulse_counts;
             break;
         case PPULSE_HI:
-            if (timer_control->use_limit) {
-                if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
-                    timer_control->limit_state = P_LIMIT_HIT; // limit hit
-                    pStopTimer(timer);
-                    break;
-                }
-            }
             for (int i = 0; i < num_ptrains; i++)
             {
                 out_ptrain = &ptrains[ptrain_idxs[i]];
@@ -241,6 +238,14 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
                 pStopTimer(timer);
             }
             *OCRnA = timer_control->period_counts;
+            if (timer_control->use_limit) {
+                if (digitalRead(timer_control->limit_pin) == timer_control->limit_state) {
+                    timer_control->limit_state = P_LIMIT_HIT; // limit hit
+                    timer_control->use_limit = false;  // must explicity attach the limit each time
+                    pStopTimer(timer);
+                    //break;
+                }
+            }
             break;
         default:
         case PDC_INIT:
@@ -350,6 +355,18 @@ uint8_t pAttach(uint8_t ptrain_index, int pin, timers16bit_t timer) {
         // initialize the timer if it has not already been initialized 
         ptrain->timer_number = timer;
         ptrain->timer_index = pAddToTimer(timer, ptrain_index);
+        return ptrain_index;
+    }
+    else {
+        return ERROR_PTRAIN_IDX ;  // too many PTRAINS 
+    }
+}
+
+uint8_t pReAttach(uint8_t ptrain_index) {
+    if(ptrain_index < NUMBER_OF_PTRAINS ) {
+        ptrain_t *ptrain = &ptrains[ptrain_index];
+        // initialize the timer if it has not already been initialized 
+        ptrain->timer_index = pAddToTimer(ptrain->timer_number, ptrain_index);
         return ptrain_index;
     }
     else {
