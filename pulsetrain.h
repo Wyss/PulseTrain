@@ -163,15 +163,15 @@ static void pEnableISR(timers16bit_t timer)
             TCCR1A = 0x00;          // normal counting mode 
             OCR1A = SMALL_COUNT;    // set the output compare to some token count
             TIFR1 |= _BV(OCF1A);    // clear any pending interrupts
-            TCCR1B |= timer_control->bit_prescale;
+            TCCR1B = timer_control->bit_prescale;
             TCNT1 = 0x0000;         // clear the timer count
-            TIMSK1 |=  _BV(OCIE1A); // enable the output compare interrupt
+            TIMSK1 =  _BV(OCIE1A); // enable the output compare interrupt
             break;
         case PTIMER3:
             TCCR3A = 0x00;          // normal counting mode 
             OCR3A = SMALL_COUNT;    // set the output compare to some token count
             TIFR3 |= _BV(OCF3A);     // clear any pending interrupts;
-            TCCR3B |= timer_control->bit_prescale;
+            TCCR3B = timer_control->bit_prescale;
             TCNT3 = 0x0000;         // clear the timer count
             TIMSK3 =  _BV(OCIE3A);  // enable the output compare interrupt
             break;
@@ -179,7 +179,7 @@ static void pEnableISR(timers16bit_t timer)
             TCCR4A = 0x00;          // normal counting mode
             OCR4A = SMALL_COUNT;    // set the output compare to some token count
             TIFR4 |= _BV(OCF4A);     // clear any pending interrupts;
-            TCCR4B |= timer_control->bit_prescale;
+            TCCR4B = timer_control->bit_prescale;
             TCNT4 = 0x0000;         // clear the timer count
             TIMSK4 =  _BV(OCIE4A);  // enable the output compare interrupt
             break;
@@ -187,7 +187,7 @@ static void pEnableISR(timers16bit_t timer)
             TCCR5A = 0x00;          // normal counting mode
             OCR5A = SMALL_COUNT;    // set the output compare to some token count
             TIFR5 |= _BV(OCF5A);     // clear any pending interrupts; 
-            TCCR5B |= timer_control->bit_prescale;
+            TCCR5B = timer_control->bit_prescale;
             TCNT5 = 0x0000;         // clear the timer count
             TIMSK5 =  _BV(OCIE5A);  // enable the output compare interrupt 
             break;
