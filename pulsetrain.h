@@ -138,6 +138,7 @@ uint8_t pRemoveFromTimer(timers16bit_t timer, uint8_t ptrain_index);
 uint8_t pStop(uint8_t ptrain_index);
 uint8_t pStartTimer(timers16bit_t timer);
 uint8_t pStopTimer(timers16bit_t timer);
+void pClearTimerOfPTrains(timers16bit_t timer);
 
 // Global Data Structure Allocation
 ///////////////////////////////////
@@ -216,7 +217,7 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
     volatile uint8_t *ptrain_idxs = timer_control->ptrain_idxs;
     switch (timer_control->pulsed_state) {
         case PPULSE_LO:
-            *TCNTn = 0x00;                          // clear timer
+            *TCNTn = 0x0000;                        // clear timer
             for (int i = 0; i < num_ptrains; i++)
             {
                 out_pin = ptrains[ptrain_idxs[i]].pin;
@@ -249,7 +250,7 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             break;
         default:
         case PDC_INIT:
-            *TCNTn = 0x00;                          // clear timer
+            *TCNTn = 0x0000;                          // clear timer
             for (int i = 0; i < num_ptrains; i++)
             {
                 out_pin = ptrains[ptrain_idxs[i]].pin;
@@ -259,7 +260,7 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
             *OCRnA = timer_control->pulse_counts;
             break;
         case PDC_RUNNING:
-            *TCNTn = 0x00;                          // clear timer
+            *TCNTn = 0x0000;                        // clear timer
             timer_control->number_of_periods += 1;  // increment pulse count
             if (timer_control->number_of_periods >= timer_control->period_num_limit) {
                 for (int i = 0; i < num_ptrains; i++)
@@ -269,6 +270,7 @@ static inline void pHandleInterrupts(   timers16bit_t timer,
                      digitalWrite( out_pin, LOW);
                 }
                 pStopTimer(timer);
+                pClearTimerOfPTrains(timer);
             }
     } // end switch
 }
