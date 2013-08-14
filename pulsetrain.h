@@ -58,7 +58,7 @@ enum pulse_states { PPULSE_LO, PPULSE_HI, PDC_INIT, PDC_RUNNING, POFF};
 
 #ifndef PTRAINS_PER_TIMER
 // REDEFINE this if you need want to add more PulseTrains to a single Timer
-#define PTRAINS_PER_TIMER       12  // the maximum number of ptrains controlled by one timer 
+#define PTRAINS_PER_TIMER       32  // the maximum number of ptrains controlled by one timer 
 #endif
 
 #define DEFAULT_PTRAIN_PRESCALE 8   // default prescale value for all Timers
